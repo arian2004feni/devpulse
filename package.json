@@ -1,0 +1,16 @@
+{
+  "name": "b7a2",
+  "version": "1.0.0",
+  "description": "DevPulse – Internal Tech Issue & Feature Tracker. A collaborative platform for software teams to report bugs, suggest features, and coordinate resolutions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Arian",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
