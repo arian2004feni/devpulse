@@ -18,3 +18,20 @@ export const signup = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const login = async (req: Request, res: Response) => {
+  try {
+    const result = await authService.loginUser(req.body);
+    sendResponse(res, 201, {
+      success: true,
+      message: "User logged in successfully",
+      data: result,
+    });
+  } catch (error) {
+    sendResponse(res, 500, {
+      success: false,
+      message: "Failed to login user",
+      errors: error,
+    });
+  }
+};

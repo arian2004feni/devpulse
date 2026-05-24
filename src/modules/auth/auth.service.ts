@@ -16,8 +16,6 @@ const registerUser = async (payload: IUser) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // const result = await pool.query(``)
-
   const values = [name, email, hashedPassword, role || "contributor"];
 
   const result = await pool.query(
@@ -25,11 +23,32 @@ const registerUser = async (payload: IUser) => {
     values,
   );
 
-  console.log(result);
-
   return result.rows[0];
+};
+
+const loginUser = async (payload: { email: string; password: string }) => {
+  const { email, password } = payload;
+
+  const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [
+    email,
+  ]);
+
+  const user = result.rows[0];
+
+  if (!user) {
+    throw new Error("user Not found");
+  }
+
+  const passwordCheck = await bcrypt.compare(password, user.password);
+
+  if (!passwordCheck) {
+    throw new Error("invalid credentials");
+  }
+
+  return user;
 };
 
 export const authService = {
   registerUser,
+  loginUser,
 };
