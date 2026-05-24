@@ -1,6 +1,8 @@
 import { pool } from "../../config/db";
+import config from "../../config/env";
 import type { IUser } from "./auth.interface";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const registerUser = async (payload: IUser) => {
   const { name, email, password, role } = payload;
@@ -45,7 +47,18 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new Error("invalid credentials");
   }
 
-  return user;
+  const token = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const acceessToken = jwt.sign(token, config.jwtSecret as string, {
+    expiresIn: "7d",
+  });
+
+  return { acceessToken };
 };
 
 export const authService = {
