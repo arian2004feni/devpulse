@@ -12,11 +12,11 @@ const registerUser = async (payload: IUser) => {
     [email],
   );
 
-  if (existingUser.rows.length === 0) {
-    throw new Error("user already exist");
+  if (existingUser.rows.length > 0) {
+    throw new Error("user already Exist");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 12);
 
   const values = [name, email, hashedPassword, role || "contributor"];
 
