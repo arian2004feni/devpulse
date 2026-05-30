@@ -10,12 +10,12 @@ export const signup = async (req: Request, res: Response) => {
       message: "User registered successfully",
       data: result,
     });
-  } catch (error) {
-    sendResponse(res, 500, {
+  } catch (error: any) {
+    sendResponse(res, error.statusCode || 500, {
       success: false,
-      message: "Failed to register user",
+      message: error.message || "Failed to register user",
       errors: error,
-    });
+    })
   }
 };
 
@@ -27,11 +27,11 @@ export const login = async (req: Request, res: Response) => {
       message: "User logged in successfully",
       data: result,
     });
-  } catch (error) {
-    sendResponse(res, 500, {
+  } catch (error: any) {
+    sendResponse(res, error.statusCode || 500, {
       success: false,
-      message: "Failed to login user",
+      message: error.message || "Failed to login user",
       errors: error,
-    });
+    })
   }
 };

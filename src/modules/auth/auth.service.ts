@@ -1,5 +1,7 @@
+import { StatusCodes } from "http-status-codes";
 import { pool } from "../../config/db";
 import config from "../../config/env";
+import AppError from "../../utils/AppError";
 import type { IUser } from "./auth.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -13,15 +15,15 @@ const registerUser = async (payload: IUser) => {
   );
 
   if (existingUser.rows.length > 0) {
-    throw new Error("user already Exist");
+    throw new AppError("user already exists", StatusCodes.BAD_REQUEST)
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  const values = [name, email, hashedPassword, role || "contributor"];
+  const values = [name, email, hashedPassword, role];
 
   const result = await pool.query(
-    `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *`,
+    `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, COALESCE($4, 'contributor')) RETURNING *`,
     values,
   );
 
@@ -38,20 +40,19 @@ const loginUser = async (payload: { email: string; password: string }) => {
   const user = result.rows[0];
 
   if (!user) {
-    throw new Error("user Not found");
+    throw new AppError("user Not found", StatusCodes.NOT_FOUND);
   }
 
   const passwordCheck = await bcrypt.compare(password, user.password);
 
   if (!passwordCheck) {
-    throw new Error("invalid credentials");
+    throw new AppError("invalid credentials", StatusCodes.UNAUTHORIZED);
   }
 
   const token = {
     id: user.id,
     name: user.name,
     email: user.email,
-    password: user.password,
     role: user.role,
   };
 
