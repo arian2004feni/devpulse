@@ -4,7 +4,7 @@ import config from "../../config/env";
 import AppError from "../../utils/AppError";
 import type { IUser } from "./auth.interface";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 
 const registerUser = async (payload: IUser) => {
   const { name, email, password, role } = payload;
@@ -15,7 +15,7 @@ const registerUser = async (payload: IUser) => {
   );
 
   if (existingUser.rows.length > 0) {
-    throw new AppError("user already exists", StatusCodes.BAD_REQUEST)
+    throw new AppError("user already exists", StatusCodes.BAD_REQUEST);
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -57,7 +57,44 @@ const loginUser = async (payload: { email: string; password: string }) => {
   };
 
   const acceessToken = jwt.sign(token, config.jwtSecret as string, {
-    expiresIn: "7d",
+    expiresIn: config.secretExpiresIn as any,
+  });
+
+  const refreshToken = jwt.sign(token, config.jwtRefreshSecret as string, {
+    expiresIn: config.refreshSecretExpiresIn as any,
+  });
+
+  return { acceessToken, refreshToken, user };
+};
+
+const generateFreshToken = async (token: string) => {
+  if (!token) {
+    throw new AppError("Unauthorized", StatusCodes.UNAUTHORIZED);
+  }
+
+  const decoded = jwt.verify(
+    token as string,
+    config.jwtRefreshSecret as string,
+  ) as JwtPayload;
+
+  const userData = await pool.query(`SELECT * FROM users WHERE email=$1`, [
+    decoded.email,
+  ]);
+
+  if (userData.rows.length === 0) {
+    throw new AppError("User not found!", StatusCodes.NOT_FOUND);
+  }
+  const user = userData.rows[0];
+
+  const jwtPayload = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const acceessToken = jwt.sign(jwtPayload, config.jwtSecret as string, {
+    expiresIn: config.secretExpiresIn as any,
   });
 
   return { acceessToken };
@@ -66,4 +103,5 @@ const loginUser = async (payload: { email: string; password: string }) => {
 export const authService = {
   registerUser,
   loginUser,
+  generateFreshToken,
 };
