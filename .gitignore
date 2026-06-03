@@ -6,3 +6,4 @@ dist
 tsup.config.d.ts
 tsup.config.d.ts.map
 tsup.config.js.map
+.env*

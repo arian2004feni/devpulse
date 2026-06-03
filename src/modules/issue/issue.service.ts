@@ -15,20 +15,58 @@ const createIssue = async (payload: any, id: number) => {
 };
 
 const getAllIssues = async (query: any) => {
-  // console.log(query);
+  const { sort = "newest", type, status } = query;
 
-  const result = await pool.query(`
+  const conditions: string[] = [];
+  const values: any[] = [];
+
+  // Filter by type
+  if (type) {
+    values.push(type);
+    conditions.push(`i.type = $${values.length}`);
+  }
+
+  // Filter by status
+  if (status) {
+    values.push(status);
+    conditions.push(`i.status = $${values.length}`);
+  }
+
+  // WHERE clause
+  const whereClause =
+    conditions.length > 0
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+  // ORDER BY clause
+  const orderBy =
+    sort === "oldest"
+      ? "ORDER BY i.created_at ASC"
+      : "ORDER BY i.created_at DESC";
+
+  const result = await pool.query(
+    `
     SELECT 
-      i.id, i.title, i.description, i.type, i.status, 
+      i.id,
+      i.title,
+      i.description,
+      i.type,
+      i.status,
       jsonb_build_object(
         'id', u.id,
         'name', u.name,
         'role', u.role
       ) AS reporter,
-      i.created_at, i.updated_at
+      i.created_at,
+      i.updated_at
     FROM issues i
-    LEFT JOIN users u ON i.reporter_id = u.id;
-    `);
+    LEFT JOIN users u ON i.reporter_id = u.id
+    ${whereClause}
+    ${orderBy};
+    `,
+    values
+  );
+
   return result.rows;
 };
 
